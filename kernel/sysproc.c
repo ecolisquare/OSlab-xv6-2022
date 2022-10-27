@@ -74,8 +74,13 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
-  return 0;
+  uint64 buf;
+  int n;
+  uint64 ans;
+  argaddr(0,&buf);
+  argint(1, &n);
+  argaddr(2, &ans);
+  return pgaccess((void*)buf, n, (void*)ans);
 }
 #endif
 
