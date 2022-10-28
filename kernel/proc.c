@@ -713,7 +713,7 @@ uint64 pgaccess(void *pg, int n, void *store) {
     }
     pagetable_t pagetable = p->pagetable;
     int ans = 0;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n && i < 32; i++) {
         pte_t *pte;
         pte = walk(pagetable, ((uint64)pg) + (uint64)PGSIZE * i, 0);
         if (pte != 0 && ((*pte) & PTE_A)) {
