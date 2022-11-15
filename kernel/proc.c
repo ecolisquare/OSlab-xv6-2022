@@ -132,6 +132,12 @@ found:
     return 0;
   }
 
+  if((p->trapframecopy = (struct trapframe *)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -146,6 +152,10 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  p->alarmintervel = 0;
+  p->alarmhandler = 0;
+  p->passedticks = 0;
+  p->alarmstate = 0;
   return p;
 }
 
@@ -158,6 +168,9 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
+  if(p->trapframecopy)
+    kfree((void*)p->trapframecopy);
+  p->trapframecopy = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
   p->pagetable = 0;
@@ -169,6 +182,11 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->alarmintervel = 0;
+  p->alarmhandler = 0;
+  p->passedticks = 0;
+  p->alarmstate = 0;
+  
 }
 
 // Create a user page table for a given process, with no user memory,
