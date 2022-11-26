@@ -1,0 +1,7 @@
+Why are there missing keys with 2 threads, but not with 1 thread? 
+Identify a sequence of events with 2 threads that can lead to a key being missing?
+单线程在访问哈希表的过程中并不会出现并发的情况,所以在put和get的过程中都不会出现错误。
+而双线程的情况下,就会存在两个线程同时向哈希表中put的情况。
+在put的过程中,如果两个线程同时put位于同一的桶中的key,首先会判断key是否已经存在,若都不存在,就会同时执行insert,
+而在insert函数中会直接申请空间,在链表头部加入相应的节点。这样的话就会导致一个节点的丢失,导致后续get时的丢失。
+在NBUCKET为5的情况下,例如写入0,5,10,15...这样的序列就会出现丢失的问题
