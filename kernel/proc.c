@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "fcntl.h"
 
 struct cpu cpus[NCPU];
 
@@ -50,11 +51,10 @@ procinit(void)
   struct proc *p;
   
   initlock(&pid_lock, "nextpid");
-  initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
-      p->state = UNUSED;
       p->kstack = KSTACK((int) (p - proc));
+      memset(p->vma, 0, sizeof(p->vma));
   }
 }
 
@@ -138,6 +138,10 @@ found:
     freeproc(p);
     release(&p->lock);
     return 0;
+  }
+
+  for(int i = 0;i < 16;i++){
+    p->vma[i].valid = 0;
   }
 
   // Set up new context to start executing at forkret,
@@ -296,6 +300,12 @@ fork(void)
   }
   np->sz = p->sz;
 
+for (int i = 0; i < 16; i++) {
+    if (p->vma[i].valid == 1) {
+      memmove(&(np->vma[i]), &(p->vma[i]), sizeof(struct VMA));
+      filedup(p->vma[i].f);
+    }
+  }
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
@@ -358,6 +368,10 @@ exit(int status)
       fileclose(f);
       p->ofile[fd] = 0;
     }
+  }
+
+  for (int i = 0; i < 16; i++) {
+      unmap_vma(p->vma[i].addr, p->vma[i].length);
   }
 
   begin_op();
